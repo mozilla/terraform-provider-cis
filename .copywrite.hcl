@@ -6,8 +6,14 @@ project {
   copyright_year = 2021
 
   header_ignore = [
+    # internal catalog metadata (prose)
+    "META.d/**/*.yaml",
+
     # examples used within documentation (prose)
     "examples/**",
+
+    # Code that Mozilla wrote
+    "internal/**",
 
     # GitHub issue template configuration
     ".github/ISSUE_TEMPLATE/*.yml",
