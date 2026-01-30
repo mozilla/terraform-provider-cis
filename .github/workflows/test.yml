@@ -54,17 +54,18 @@ jobs:
 
   # Run acceptance tests in a matrix with Terraform CLI versions
   test:
-    name: 'Acceptance Tests: Terraform ${{ matrix.terraform }}'
+    name: 'Acceptance Tests: ${{ matrix.tool.name }} ${{ matrix.tool.version }}'
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
-        # Terraform versions
-        terraform:
-          - '1.13.*'
-          - '1.14.*'
+        tool:
+          - name: terraform
+            version: '1.13.*'
+          - name: terraform
+            version: '1.14.*'
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
@@ -73,8 +74,9 @@ jobs:
           cache: true
       - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
-          terraform_version: ${{ matrix.terraform }}
+          terraform_version: ${{ matrix.tool.version }}
           terraform_wrapper: false
+        if: ${{ matrix.tool.name == 'terraform' }}
       - run: go mod download
       - env:
           AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
