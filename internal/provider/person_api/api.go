@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"golang.org/x/oauth2/clientcredentials"
@@ -81,9 +80,14 @@ func (client *Client) GetGithubUsernameByNodeID(ctx context.Context, githubIDV3 
 		return "", err
 	}
 
-	var username string
-	if err := json.Unmarshal(respBody, &username); err != nil {
-		username = strings.TrimSpace(string(respBody))
+	var result map[string]string
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return "", fmt.Errorf("failed to parse GitHub username response: %w", err)
+	}
+
+	username, ok := result["username"]
+	if !ok {
+		return "", fmt.Errorf("GitHub username response missing 'username' key")
 	}
 
 	return username, nil
