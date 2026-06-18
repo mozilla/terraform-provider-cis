@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"golang.org/x/oauth2/clientcredentials"
@@ -55,6 +56,37 @@ func (client *Client) GetAccessToken(ctx context.Context) error {
 	}
 
 	return err
+}
+
+func (client *Client) GetGithubUsernameByNodeID(ctx context.Context, githubIDV3 string) (string, error) {
+	httpReq, err := http.NewRequest("GET", "https://people.mozilla.org/whoami/github/username/"+githubIDV3, nil)
+	if err != nil {
+		return "", err
+	}
+
+	httpResp, err := client.httpClient.Do(httpReq)
+	tflog.Info(ctx, fmt.Sprintf("HTTP Request: %#v", httpReq))
+	if err != nil {
+		return "", err
+	}
+
+	if httpResp.StatusCode >= 400 {
+		return "", fmt.Errorf("people.mozilla.org responded with status code %d", httpResp.StatusCode)
+	}
+
+	defer httpResp.Body.Close()
+
+	respBody, err := io.ReadAll(httpResp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var username string
+	if err := json.Unmarshal(respBody, &username); err != nil {
+		username = strings.TrimSpace(string(respBody))
+	}
+
+	return username, nil
 }
 
 func (client *Client) GetPersonByEmail(ctx context.Context, email string) (*Person, error) {

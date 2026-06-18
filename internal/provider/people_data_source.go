@@ -145,7 +145,13 @@ func (d *PeopleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	if person.Identities.GithubIDV4 != nil {
 		data.GitHub_Node_Id = types.StringValue(person.Identities.GithubIDV4.Value)
 	}
-	data.GitHub_Username = types.StringValue(person.Usernames.Values.GitHubUsername)
+	githubUsername := person.Usernames.Values.GitHubUsername
+	if person.Identities.GithubIDV3 != nil && person.Identities.GithubIDV3.Value != "" {
+		if username, err := d.client.GetGithubUsernameByNodeID(ctx, person.Identities.GithubIDV3.Value); err == nil {
+			githubUsername = username
+		}
+	}
+	data.GitHub_Username = types.StringValue(githubUsername)
 	data.Mozilliansorg_Groups, diags = types.ListValueFrom(ctx, types.StringType, person.AccessInformation.Mozilliansorg.List)
 	for _, d := range diags {
 		resp.Diagnostics.Append(d)
