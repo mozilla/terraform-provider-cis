@@ -69,7 +69,7 @@ func (client *Client) GetGithubUsernameByNodeID(ctx context.Context, githubIDV3 
 		return "", err
 	}
 
-	if httpResp.StatusCode >= 400 {
+	if httpResp.StatusCode != 200 {
 		return "", fmt.Errorf("people.mozilla.org responded with status code %d", httpResp.StatusCode)
 	}
 
