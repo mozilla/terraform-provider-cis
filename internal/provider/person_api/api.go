@@ -56,13 +56,14 @@ func (client *Client) GetAccessToken(ctx context.Context) error {
 
 	return err
 }
+
 /*
-WORKAROUND: hit the dino-park whoami endpoint to get Github username from ID since cis has stale data (MZCLD-3067) 
+WORKAROUND: hit the dino-park whoami endpoint to get Github username from ID since cis has stale data (MZCLD-3067)
 https://github.com/mozilla-iam/dino-park-whoami/blob/377130f75a69efc52a28de8b88ca075b6dbdca9b/src/github/app.rs#L62
 TODO: Fix this by doing one of:
- - Move this lookup upstream to fix cis staleness https://github.com/mozilla-iam/cis/blob/master/python-modules/cis_publisher/cis_publisher/auth0.py#L311
- - Hit Github directly instead of whoami
- - Hope https://github.com/integrations/terraform-provider-github/pull/3436 gets merged, do this lookup in TF
+  - Move this lookup upstream to fix cis staleness https://github.com/mozilla-iam/cis/blob/master/python-modules/cis_publisher/cis_publisher/auth0.py#L311
+  - Hit Github directly instead of whoami
+  - Hope https://github.com/integrations/terraform-provider-github/pull/3436 gets merged, do this lookup in TF
 */
 func (client *Client) GetGithubUsernameByNodeID(ctx context.Context, githubIDV3 string) (string, error) {
 	httpReq, err := http.NewRequest("GET", "https://people.mozilla.org/whoami/github/username/"+githubIDV3, nil)
