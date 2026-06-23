@@ -43,6 +43,7 @@ output "example" {
 
 ### Read-Only
 
+- `github_id` (String) GitHub ID
 - `github_node_id` (String) GitHub node ID
 - `github_username` (String) GitHub username
 - `mozilliansorg_groups` (List of String) Mozilliansorg groups the user is in

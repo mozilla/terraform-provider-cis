@@ -25,6 +25,11 @@ func TestAccExampleDataSource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"data.cis_people.test",
+						tfjsonpath.New("github_id"),
+						knownvalue.StringExact("578466"),
+					),
+					statecheck.ExpectKnownValue(
+						"data.cis_people.test",
 						tfjsonpath.New("github_node_id"),
 						knownvalue.StringExact("MDQ6VXNlcjU3ODQ2Ng=="),
 					),

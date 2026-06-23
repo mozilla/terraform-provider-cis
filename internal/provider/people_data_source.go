@@ -29,6 +29,7 @@ type PeopleDataSource struct {
 // PeopleDataSourceModel describes the data source data model.
 type PeopleDataSourceModel struct {
 	Email                types.String `tfsdk:"email"`
+	GitHub_Id            types.String `tfsdk:"github_id"`
 	GitHub_Node_Id       types.String `tfsdk:"github_node_id"`
 	GitHub_Username      types.String `tfsdk:"github_username"`
 	Id                   types.String `tfsdk:"id"`
@@ -49,6 +50,10 @@ func (d *PeopleDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 			"email": schema.StringAttribute{
 				MarkdownDescription: "People email address",
 				Optional:            true,
+			},
+			"github_id": schema.StringAttribute{
+				MarkdownDescription: "GitHub ID",
+				Computed:            true,
 			},
 			"github_node_id": schema.StringAttribute{
 				MarkdownDescription: "GitHub node ID",
@@ -142,6 +147,9 @@ func (d *PeopleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	// save into the Terraform state.
 	data.Id = types.StringValue(person.UserID.Value)
 
+	if person.Identities.GithubIDV3 != nil {
+		data.GitHub_Id = types.StringValue(person.Identities.GithubIDV3.Value)
+	}
 	if person.Identities.GithubIDV4 != nil {
 		data.GitHub_Node_Id = types.StringValue(person.Identities.GithubIDV4.Value)
 	}
