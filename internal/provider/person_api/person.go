@@ -1,5 +1,22 @@
 package person_api
 
+// UsersByAttributeResponse is the paginated response returned by
+// /v2/users/id/all/by_attribute_contains. With fullProfiles=True, each entry in
+// Users wraps the full Person under "profile". NextPage is an opaque token that
+// must be passed back verbatim to fetch the next page; it is empty once the last
+// page has been returned.
+type UsersByAttributeResponse struct {
+	Users    []UserProfile `json:"users"`
+	NextPage string        `json:"nextPage"`
+}
+
+// UserProfile is a single entry in a UsersByAttributeResponse: a user id paired
+// with the full person profile.
+type UserProfile struct {
+	ID      StandardAttributeString `json:"id"`
+	Profile Person                  `json:"profile"`
+}
+
 type Person struct {
 	AccessInformation AccessInformationValuesArray    `json:"access_information"`
 	Active            StandardAttributeBoolean        `json:"active"`

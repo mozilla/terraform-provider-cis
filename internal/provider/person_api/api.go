@@ -163,6 +163,67 @@ func (client *Client) GetPersonByEmail(ctx context.Context, email string) (*Pers
 	return &person, nil
 }
 
+// GetUsersByLDAPGroup returns the full profiles of all active users that are
+// members of the given LDAP group, following pagination until exhausted.
+func (client *Client) GetUsersByLDAPGroup(ctx context.Context, ldapGroup string) ([]Person, error) {
+	var people []Person
+
+	endpoint := client.personEndpoint + "/v2/users/id/all/by_attribute_contains"
+
+	query := url.Values{}
+	query.Set("access_information.ldap", ldapGroup)
+	query.Set("fullProfiles", "True")
+	query.Set("active", "True")
+
+	for {
+		httpReq, err := http.NewRequestWithContext(ctx, "GET", endpoint+"?"+query.Encode(), nil)
+		if err != nil {
+			return nil, err
+		}
+
+		httpReq.Header.Add("Authorization", "Bearer "+client.auth0AccessToken)
+
+		httpResp, err := client.httpClient.Do(httpReq)
+		tflog.Info(ctx, fmt.Sprintf("HTTP Request: %#v", httpReq))
+		if err != nil {
+			return nil, err
+		}
+
+		if httpResp.StatusCode >= 400 {
+			httpResp.Body.Close()
+			return nil, fmt.Errorf("Person API responded with status code %d", httpResp.StatusCode)
+		}
+
+		respBody, err := io.ReadAll(httpResp.Body)
+		httpResp.Body.Close()
+		if err != nil {
+			return nil, err
+		}
+
+		var page UsersByAttributeResponse
+		if err := json.Unmarshal(respBody, &page); err != nil {
+			return nil, err
+		}
+
+		for i := range page.Users {
+			person := page.Users[i].Profile
+			flattenAccessInformation(&person)
+			people = append(people, person)
+		}
+
+		// nextPage is empty (or null) once all pages have been returned.
+		next := page.NextPage
+		if next == "" || next == "null" {
+			break
+		}
+
+		// Pass the token back verbatim, as the API documentation instructs.
+		query.Set("nextPage", next)
+	}
+
+	return people, nil
+}
+
 // flattenAccessInformation converts the Mozilliansorg and LDAP access information
 // Values maps into lists of group names stored in their respective List fields.
 func flattenAccessInformation(person *Person) {

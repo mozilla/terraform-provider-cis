@@ -149,7 +149,6 @@ func (d *PeopleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	var person *person_api.Person
 	var err error
-	var diags diag.Diagnostics
 
 	if data.Email.ValueString() != "" {
 		person, err = d.client.GetPersonByEmail(ctx, data.Email.ValueString())
@@ -160,35 +159,15 @@ func (d *PeopleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	tflog.Info(ctx, fmt.Sprintf("Read data from API %#v", person), map[string]any{"email": data.Email.ValueString()})
 
-	// For the purposes of this example code, hardcoding a response value to
-	// save into the Terraform state.
-	data.Id = types.StringValue(person.UserID.Value)
+	model, diags := personToModel(ctx, d.client, person)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-	if person.Identities.GithubIDV3 != nil {
-		data.GitHub_Id = types.StringValue(person.Identities.GithubIDV3.Value)
-	}
-	if person.Identities.GithubIDV4 != nil {
-		data.GitHub_Node_Id = types.StringValue(person.Identities.GithubIDV4.Value)
-	}
-	githubUsername := person.Usernames.Values.GitHubUsername
-	if person.Identities.GithubIDV3 != nil && person.Identities.GithubIDV3.Value != "" {
-		if username, err := d.client.GetGithubUsernameByNodeID(ctx, person.Identities.GithubIDV3.Value); err == nil {
-			githubUsername = username
-		}
-	}
-	data.GitHub_Username = types.StringValue(githubUsername)
-
-	ldapGroups, ldapDiags := types.ListValueFrom(ctx, types.StringType, person.AccessInformation.LDAP.List)
-	for _, d := range ldapDiags {
-		resp.Diagnostics.Append(d)
-	}
-	data.LDAP_Groups = ldapGroups
-
-	data.Mozilliansorg_Groups, diags = types.ListValueFrom(ctx, types.StringType, person.AccessInformation.Mozilliansorg.List)
-	for _, d := range diags {
-		resp.Diagnostics.Append(d)
-	}
-	data.Username = types.StringValue(person.PrimaryUsername.Value)
+	// Preserve the email the caller queried with; the rest comes from the API.
+	model.Email = data.Email
+	data = model
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
@@ -200,4 +179,42 @@ func (d *PeopleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+// personToModel maps a person_api.Person into a PeopleDataSourceModel, applying
+// the same GitHub username workaround used elsewhere in the provider. It is
+// shared by the cis_people and cis_group data sources. The Email field is left
+// unset, as it is not consistently present on profiles returned in bulk; the
+// caller can populate it from the source query when known.
+func personToModel(ctx context.Context, client *person_api.Client, person *person_api.Person) (PeopleDataSourceModel, diag.Diagnostics) {
+	var data PeopleDataSourceModel
+	var diags diag.Diagnostics
+
+	data.Id = types.StringValue(person.UserID.Value)
+
+	if person.Identities.GithubIDV3 != nil {
+		data.GitHub_Id = types.StringValue(person.Identities.GithubIDV3.Value)
+	}
+	if person.Identities.GithubIDV4 != nil {
+		data.GitHub_Node_Id = types.StringValue(person.Identities.GithubIDV4.Value)
+	}
+	githubUsername := person.Usernames.Values.GitHubUsername
+	if person.Identities.GithubIDV3 != nil && person.Identities.GithubIDV3.Value != "" {
+		if username, err := client.GetGithubUsernameByNodeID(ctx, person.Identities.GithubIDV3.Value); err == nil {
+			githubUsername = username
+		}
+	}
+	data.GitHub_Username = types.StringValue(githubUsername)
+
+	ldapGroups, ldapDiags := types.ListValueFrom(ctx, types.StringType, person.AccessInformation.LDAP.List)
+	diags.Append(ldapDiags...)
+	data.LDAP_Groups = ldapGroups
+
+	groups, groupDiags := types.ListValueFrom(ctx, types.StringType, person.AccessInformation.Mozilliansorg.List)
+	diags.Append(groupDiags...)
+	data.Mozilliansorg_Groups = groups
+
+	data.Username = types.StringValue(person.PrimaryUsername.Value)
+
+	return data, diags
 }
