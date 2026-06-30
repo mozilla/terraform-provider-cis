@@ -159,11 +159,13 @@ func (d *PeopleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	tflog.Info(ctx, fmt.Sprintf("Read data from API %#v", person), map[string]any{"email": data.Email.ValueString()})
 
-	model, diags := personToModel(ctx, d.client, person)
+	model, diags := personToModel(ctx, person)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	model.GitHub_Username = types.StringValue(resolveGithubUsername(ctx, d.client, person))
 
 	// Preserve the email the caller queried with; the rest comes from the API.
 	model.Email = data.Email
@@ -181,12 +183,13 @@ func (d *PeopleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	}
 }
 
-// personToModel maps a person_api.Person into a PeopleDataSourceModel, applying
-// the same GitHub username workaround used elsewhere in the provider. It is
-// shared by the cis_people and cis_group data sources. The Email field is left
-// unset, as it is not consistently present on profiles returned in bulk; the
-// caller can populate it from the source query when known.
-func personToModel(ctx context.Context, client *person_api.Client, person *person_api.Person) (PeopleDataSourceModel, diag.Diagnostics) {
+// personToModel maps a person_api.Person into a PeopleDataSourceModel using only
+// locally-available data. It is shared by the cis_people and cis_group data
+// sources. GitHub_Username is set to the value CIS provides; callers wanting the
+// freshest value should overwrite it with resolveGithubUsername (a network call).
+// The Email field is left unset, as it is not consistently present on profiles
+// returned in bulk; the caller can populate it from the source query when known.
+func personToModel(ctx context.Context, person *person_api.Person) (PeopleDataSourceModel, diag.Diagnostics) {
 	var data PeopleDataSourceModel
 	var diags diag.Diagnostics
 
@@ -198,13 +201,7 @@ func personToModel(ctx context.Context, client *person_api.Client, person *perso
 	if person.Identities.GithubIDV4 != nil {
 		data.GitHub_Node_Id = types.StringValue(person.Identities.GithubIDV4.Value)
 	}
-	githubUsername := person.Usernames.Values.GitHubUsername
-	if person.Identities.GithubIDV3 != nil && person.Identities.GithubIDV3.Value != "" {
-		if username, err := client.GetGithubUsernameByNodeID(ctx, person.Identities.GithubIDV3.Value); err == nil {
-			githubUsername = username
-		}
-	}
-	data.GitHub_Username = types.StringValue(githubUsername)
+	data.GitHub_Username = types.StringValue(person.Usernames.Values.GitHubUsername)
 
 	ldapGroups, ldapDiags := types.ListValueFrom(ctx, types.StringType, person.AccessInformation.LDAP.List)
 	diags.Append(ldapDiags...)
@@ -217,4 +214,18 @@ func personToModel(ctx context.Context, client *person_api.Client, person *perso
 	data.Username = types.StringValue(person.PrimaryUsername.Value)
 
 	return data, diags
+}
+
+// resolveGithubUsername returns the freshest GitHub username for the person,
+// performing the dino-park whoami lookup when a v3 id is available. On any
+// lookup failure it falls back to the CIS-provided value. This makes a network
+// call and is safe to invoke concurrently for different people.
+func resolveGithubUsername(ctx context.Context, client *person_api.Client, person *person_api.Person) string {
+	githubUsername := person.Usernames.Values.GitHubUsername
+	if person.Identities.GithubIDV3 != nil && person.Identities.GithubIDV3.Value != "" {
+		if username, err := client.GetGithubUsernameByNodeID(ctx, person.Identities.GithubIDV3.Value); err == nil {
+			githubUsername = username
+		}
+	}
+	return githubUsername
 }

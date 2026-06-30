@@ -9,7 +9,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"golang.org/x/sync/errgroup"
 )
+
+// githubLookupConcurrency bounds the number of in-flight whoami lookups when
+// resolving GitHub usernames for a group's members.
+const githubLookupConcurrency = 20
 
 // Ensure provider defined types fully satisfy framework interfaces.
 var _ datasource.DataSource = &GroupDataSource{}
@@ -91,17 +96,32 @@ func (d *GroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 
 	tflog.Info(ctx, fmt.Sprintf("Read %d group members from API", len(people)), map[string]any{"ldap_group": data.LdapGroup.ValueString()})
 
-	members := make([]PeopleDataSourceModel, 0, len(people))
+	// Map every member using only local data first; this is network-free.
+	members := make([]PeopleDataSourceModel, len(people))
 	for i := range people {
-		person := people[i]
-		member, diags := personToModel(ctx, d.client, &person)
+		member, diags := personToModel(ctx, &people[i])
 		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		member.Email = types.StringValue(person.PrimaryEmail.Value)
-		members = append(members, member)
+		member.Email = types.StringValue(people[i].PrimaryEmail.Value)
+		members[i] = member
 	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Resolving GitHub usernames requires one whoami lookup per member, which
+	// dominates the read time for large groups. Fan the lookups out with bounded
+	// concurrency; each goroutine writes a distinct index, so no locking needed.
+	group, groupCtx := errgroup.WithContext(ctx)
+	group.SetLimit(githubLookupConcurrency)
+	for i := range people {
+		group.Go(func() error {
+			members[i].GitHub_Username = types.StringValue(resolveGithubUsername(groupCtx, d.client, &people[i]))
+			return nil
+		})
+	}
+	// resolveGithubUsername never returns an error, so Wait cannot fail.
+	_ = group.Wait()
+
 	data.Members = members
 
 	tflog.Trace(ctx, "read a data source")
