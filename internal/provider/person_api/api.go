@@ -9,6 +9,7 @@ import (
 	"net/url"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 )
 
@@ -24,15 +25,34 @@ type Client struct {
 	auth0AccessToken string
 }
 
-func NewClient(auth0ClientID string, auth0ClientSecret string, auth0Audience string, auth0Endpoint string, auth0Scopes []string, personEndpoint string) *Client {
+// userAgentRoundTripper sets a User-Agent header on every outbound request that
+// does not already specify one, then delegates to the wrapped RoundTripper.
+type userAgentRoundTripper struct {
+	userAgent string
+	next      http.RoundTripper
+}
+
+func (rt *userAgentRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	// Per the RoundTripper contract the request must not be mutated, so clone it
+	// before adding the header.
+	r := req.Clone(req.Context())
+	if r.Header.Get("User-Agent") == "" {
+		r.Header.Set("User-Agent", rt.userAgent)
+	}
+	return rt.next.RoundTrip(r)
+}
+
+func NewClient(auth0ClientID string, auth0ClientSecret string, auth0Audience string, auth0Endpoint string, auth0Scopes []string, personEndpoint string, userAgent string) *Client {
 	c := &Client{
 		auth0ClientID:     auth0ClientID,
 		auth0ClientSecret: auth0ClientSecret,
 		auth0Audience:     auth0Audience,
 		auth0Endpoint:     auth0Endpoint,
 		auth0Scopes:       auth0Scopes,
-		httpClient:        &http.Client{},
-		personEndpoint:    personEndpoint,
+		httpClient: &http.Client{
+			Transport: &userAgentRoundTripper{userAgent: userAgent, next: http.DefaultTransport},
+		},
+		personEndpoint: personEndpoint,
 	}
 
 	return c
@@ -46,6 +66,10 @@ func (client *Client) GetAccessToken(ctx context.Context) error {
 		Scopes:         client.auth0Scopes,
 		TokenURL:       client.auth0Endpoint,
 	}
+
+	// Use our own HTTP client for the token request so it carries the same
+	// User-Agent header as the Person API calls.
+	ctx = context.WithValue(ctx, oauth2.HTTPClient, client.httpClient)
 
 	oauth_token, err := oauth2_config.Token(ctx)
 	tflog.Info(ctx, fmt.Sprintf("HTTP Request: %#v", oauth_token))

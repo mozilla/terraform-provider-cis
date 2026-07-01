@@ -2,7 +2,9 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"runtime"
 	"strconv"
 	"terraform-provider-cis/internal/provider/person_api"
 
@@ -146,7 +148,7 @@ func (p *CISProvider) Configure(ctx context.Context, req provider.ConfigureReque
 		// "display:authenticated",
 		// "display:vouched",
 		"display:staff",
-	}, person_endpoint)
+	}, person_endpoint, buildUserAgent(p.version, req.TerraformVersion))
 
 	err := client.GetAccessToken(ctx)
 	if err != nil {
@@ -182,4 +184,37 @@ func New(version string) func() provider.Provider {
 			version: version,
 		}
 	}
+}
+
+// buildUserAgent constructs the User-Agent header sent on all outbound API
+// requests. It identifies the provider version and whether it is a development
+// build, the Go toolchain and platform the provider was compiled with, and the
+// version of the Terraform/OpenTofu CLI making the request.
+//
+// providerVersion is "dev" for local builds and "test" during acceptance
+// testing; both are reported as development builds. terraformVersion is supplied
+// by the CLI at configure time (OpenTofu reports its version through the same
+// field, so the CLI product cannot be distinguished here — only the version).
+func buildUserAgent(providerVersion string, terraformVersion string) string {
+	channel := "release"
+	if providerVersion == "" || providerVersion == "dev" || providerVersion == "test" {
+		channel = "dev"
+	}
+
+	if providerVersion == "" {
+		providerVersion = "unknown"
+	}
+	if terraformVersion == "" {
+		terraformVersion = "unknown"
+	}
+
+	return fmt.Sprintf(
+		"terraform-provider-cis/%s (%s) Terraform/%s Go/%s (%s/%s)",
+		providerVersion,
+		channel,
+		terraformVersion,
+		runtime.Version(),
+		runtime.GOOS,
+		runtime.GOARCH,
+	)
 }
