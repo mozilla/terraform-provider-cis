@@ -163,19 +163,23 @@ func (client *Client) GetPersonByEmail(ctx context.Context, email string) (*Pers
 	return &person, nil
 }
 
-// GetUsersByLDAPGroup returns the full profiles of all active users that are
-// members of the given LDAP group, following pagination until exhausted. When
-// staff is non-nil, results are additionally filtered by whether the person is
-// Mozilla staff (staff_information.staff).
-func (client *Client) GetUsersByLDAPGroup(ctx context.Context, ldapGroup string, staff *bool) ([]Person, error) {
+// GetUsersByAttributes returns the full profiles of all active users matching
+// the given attribute filters, following pagination until exhausted. When
+// ldapGroup is non-empty, results are filtered by LDAP group membership
+// (access_information.ldap). When staff is non-nil, results are filtered by
+// whether the person is Mozilla staff (staff_information.staff). At least one
+// filter should be supplied.
+func (client *Client) GetUsersByAttributes(ctx context.Context, ldapGroup string, staff *bool) ([]Person, error) {
 	var people []Person
 
 	endpoint := client.personEndpoint + "/v2/users/id/all/by_attribute_contains"
 
 	query := url.Values{}
-	query.Set("access_information.ldap", ldapGroup)
 	query.Set("fullProfiles", "True")
 	query.Set("active", "True")
+	if ldapGroup != "" {
+		query.Set("access_information.ldap", ldapGroup)
+	}
 	if staff != nil {
 		// The API expects capitalized boolean values, matching active=True above.
 		staffValue := "False"

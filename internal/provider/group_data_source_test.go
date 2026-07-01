@@ -40,6 +40,20 @@ func TestAccGroupDataSource(t *testing.T) {
 					),
 				},
 			},
+			// Read testing with only the staff filter set (no ldap_group).
+			// Note: this matches all Mozilla staff and is correspondingly slow.
+			{
+				Config: testAccGroupDataSourceConfigStaffOnly,
+				ConfigStateChecks: []statecheck.StateCheck{
+					// A staff-only query should return at least one member with a
+					// populated user identifier.
+					statecheck.ExpectKnownValue(
+						"data.cis_group.test",
+						tfjsonpath.New("members").AtSliceIndex(0).AtMapKey("id"),
+						knownvalue.NotNull(),
+					),
+				},
+			},
 		},
 	})
 }
@@ -54,5 +68,11 @@ const testAccGroupDataSourceConfigStaff = `
 data "cis_group" "test" {
   ldap_group = "team_moco"
   staff      = true
+}
+`
+
+const testAccGroupDataSourceConfigStaffOnly = `
+data "cis_group" "test" {
+  staff = true
 }
 `

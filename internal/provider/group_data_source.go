@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"terraform-provider-cis/internal/provider/person_api"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/datasourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"golang.org/x/sync/errgroup"
@@ -46,7 +48,7 @@ func (d *GroupDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 		Attributes: map[string]schema.Attribute{
 			"ldap_group": schema.StringAttribute{
 				MarkdownDescription: "LDAP group to list members of",
-				Required:            true,
+				Optional:            true,
 			},
 			"staff": schema.BoolAttribute{
 				MarkdownDescription: "Filter members by whether they are Mozilla staff",
@@ -60,6 +62,15 @@ func (d *GroupDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 				},
 			},
 		},
+	}
+}
+
+func (d GroupDataSource) ConfigValidators(ctx context.Context) []datasource.ConfigValidator {
+	return []datasource.ConfigValidator{
+		datasourcevalidator.AtLeastOneOf(
+			path.MatchRoot("ldap_group"),
+			path.MatchRoot("staff"),
+		),
 	}
 }
 
@@ -99,7 +110,7 @@ func (d *GroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		staff = data.Staff.ValueBoolPointer()
 	}
 
-	people, err := d.client.GetUsersByLDAPGroup(ctx, data.LdapGroup.ValueString(), staff)
+	people, err := d.client.GetUsersByAttributes(ctx, data.LdapGroup.ValueString(), staff)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read group members, got error: %s", err.Error()))
 		return
