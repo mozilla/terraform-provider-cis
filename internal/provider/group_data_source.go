@@ -31,6 +31,7 @@ type GroupDataSource struct {
 // GroupDataSourceModel describes the data source data model.
 type GroupDataSourceModel struct {
 	LdapGroup types.String            `tfsdk:"ldap_group"`
+	Staff     types.Bool              `tfsdk:"staff"`
 	Members   []PeopleDataSourceModel `tfsdk:"members"`
 }
 
@@ -46,6 +47,10 @@ func (d *GroupDataSource) Schema(ctx context.Context, req datasource.SchemaReque
 			"ldap_group": schema.StringAttribute{
 				MarkdownDescription: "LDAP group to list members of",
 				Required:            true,
+			},
+			"staff": schema.BoolAttribute{
+				MarkdownDescription: "Filter members by whether they are Mozilla staff",
+				Optional:            true,
 			},
 			"members": schema.ListNestedAttribute{
 				MarkdownDescription: "People who are members of the LDAP group",
@@ -88,7 +93,13 @@ func (d *GroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	people, err := d.client.GetUsersByLDAPGroup(ctx, data.LdapGroup.ValueString())
+	// staff is optional; only pass it as a filter when the caller set it.
+	var staff *bool
+	if !data.Staff.IsNull() && !data.Staff.IsUnknown() {
+		staff = data.Staff.ValueBoolPointer()
+	}
+
+	people, err := d.client.GetUsersByLDAPGroup(ctx, data.LdapGroup.ValueString(), staff)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read group members, got error: %s", err.Error()))
 		return

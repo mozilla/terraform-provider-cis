@@ -25,6 +25,7 @@ provider "cis" {}
 
 data "cis_group" "example" {
   ldap_group = "team_moco"
+  staff      = true
 }
 
 output "example" {
@@ -38,6 +39,10 @@ output "example" {
 ### Required
 
 - `ldap_group` (String) LDAP group to list members of
+
+### Optional
+
+- `staff` (Boolean) Filter members by whether they are Mozilla staff
 
 ### Read-Only
 

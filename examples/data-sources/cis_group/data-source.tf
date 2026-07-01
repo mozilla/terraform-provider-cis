@@ -10,6 +10,7 @@ provider "cis" {}
 
 data "cis_group" "example" {
   ldap_group = "team_moco"
+  staff      = true
 }
 
 output "example" {

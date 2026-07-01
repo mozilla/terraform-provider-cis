@@ -27,6 +27,19 @@ func TestAccGroupDataSource(t *testing.T) {
 					),
 				},
 			},
+			// Read testing with the staff filter set
+			{
+				Config: testAccGroupDataSourceConfigStaff,
+				ConfigStateChecks: []statecheck.StateCheck{
+					// Filtering to staff should still return at least one member
+					// with a populated user identifier.
+					statecheck.ExpectKnownValue(
+						"data.cis_group.test",
+						tfjsonpath.New("members").AtSliceIndex(0).AtMapKey("id"),
+						knownvalue.NotNull(),
+					),
+				},
+			},
 		},
 	})
 }
@@ -34,5 +47,12 @@ func TestAccGroupDataSource(t *testing.T) {
 const testAccGroupDataSourceConfig = `
 data "cis_group" "test" {
   ldap_group = "team_moco"
+}
+`
+
+const testAccGroupDataSourceConfigStaff = `
+data "cis_group" "test" {
+  ldap_group = "team_moco"
+  staff      = true
 }
 `
