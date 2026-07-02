@@ -66,7 +66,7 @@ TODO: Fix this by doing one of:
   - Hope https://github.com/integrations/terraform-provider-github/pull/3436 gets merged, do this lookup in TF
 */
 func (client *Client) GetGithubUsernameByNodeID(ctx context.Context, githubIDV3 string) (string, error) {
-	httpReq, err := http.NewRequest("GET", "https://people.mozilla.org/whoami/github/username/"+githubIDV3, nil)
+	httpReq, err := http.NewRequestWithContext(ctx, "GET", "https://people.mozilla.org/whoami/github/username/"+githubIDV3, nil)
 	if err != nil {
 		return "", err
 	}
@@ -104,7 +104,7 @@ func (client *Client) GetGithubUsernameByNodeID(ctx context.Context, githubIDV3 
 func (client *Client) GetPersonByEmail(ctx context.Context, email string) (*Person, error) {
 	person := Person{}
 
-	httpReq, err := http.NewRequest("GET", client.personEndpoint+"/v2/user/primary_email/"+email, nil)
+	httpReq, err := http.NewRequestWithContext(ctx, "GET", client.personEndpoint+"/v2/user/primary_email/"+email, nil)
 	if err != nil {
 		return nil, err
 	}
