@@ -32,6 +32,7 @@ type PeopleDataSourceModel struct {
 	GitHub_Node_Id       types.String `tfsdk:"github_node_id"`
 	GitHub_Username      types.String `tfsdk:"github_username"`
 	Id                   types.String `tfsdk:"id"`
+	LDAP_Groups          types.List   `tfsdk:"ldap_groups"`
 	Mozilliansorg_Groups types.List   `tfsdk:"mozilliansorg_groups"`
 	Username             types.String `tfsdk:"username"`
 }
@@ -61,6 +62,11 @@ func (d *PeopleDataSource) Schema(ctx context.Context, req datasource.SchemaRequ
 			"id": schema.StringAttribute{
 				MarkdownDescription: "People user identifier",
 				Optional:            true,
+			},
+			"ldap_groups": schema.ListAttribute{
+				ElementType:         types.StringType,
+				MarkdownDescription: "LDAP groups the user is in",
+				Computed:            true,
 			},
 			"mozilliansorg_groups": schema.ListAttribute{
 				ElementType:         types.StringType,
@@ -152,6 +158,13 @@ func (d *PeopleDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		}
 	}
 	data.GitHub_Username = types.StringValue(githubUsername)
+
+	ldapGroups, ldapDiags := types.ListValueFrom(ctx, types.StringType, person.AccessInformation.LDAP.List)
+	for _, d := range ldapDiags {
+		resp.Diagnostics.Append(d)
+	}
+	data.LDAP_Groups = ldapGroups
+
 	data.Mozilliansorg_Groups, diags = types.ListValueFrom(ctx, types.StringType, person.AccessInformation.Mozilliansorg.List)
 	for _, d := range diags {
 		resp.Diagnostics.Append(d)

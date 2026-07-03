@@ -45,4 +45,5 @@ output "example" {
 
 - `github_node_id` (String) GitHub node ID
 - `github_username` (String) GitHub username
+- `ldap_groups` (List of String) LDAP groups the user is in
 - `mozilliansorg_groups` (List of String) Mozilliansorg groups the user is in

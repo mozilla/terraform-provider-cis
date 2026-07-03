@@ -38,14 +38,20 @@ func TestAccExampleDataSource(t *testing.T) {
 						tfjsonpath.New("id"),
 						knownvalue.StringExact("ad|Mozilla-LDAP|jbuckley"),
 					),
-					// TODO need to output sorted list before I can easily test this attribute
-					// statecheck.ExpectKnownValue(
-					// 	"data.cis_people.test",
-					// 	tfjsonpath.New("mozilliansorg_groups"),
-					// 	knownvalue.ListPartial(map[int]knownvalue.Check{
-					// 		0: knownvalue.StringExact("value1"),
-					// 	}),
-					// ),
+					statecheck.ExpectKnownValue(
+						"data.cis_people.test",
+						tfjsonpath.New("ldap_groups"),
+						knownvalue.ListPartial(map[int]knownvalue.Check{
+							0: knownvalue.StringExact("inventory"),
+						}),
+					),
+					statecheck.ExpectKnownValue(
+						"data.cis_people.test",
+						tfjsonpath.New("mozilliansorg_groups"),
+						knownvalue.ListPartial(map[int]knownvalue.Check{
+							0: knownvalue.StringExact("aws_billing_access"),
+						}),
+					),
 					statecheck.ExpectKnownValue(
 						"data.cis_people.test",
 						tfjsonpath.New("username"),

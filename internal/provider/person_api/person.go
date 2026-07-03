@@ -81,6 +81,7 @@ type LDAPAttribute struct {
 	Metadata  Metadata               `json:"metadata"`
 	Signature Signature              `json:"signature"`
 	Values    map[string]interface{} `json:"values"`
+	List      []string
 }
 
 type MozilliansorgAttribute struct {
