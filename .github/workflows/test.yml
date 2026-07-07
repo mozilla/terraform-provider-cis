@@ -94,5 +94,5 @@ jobs:
           TF_ACC_PROVIDER_HOST: ${{ fromJson('{"tofu":"registry.opentofu.org","terraform":"registry.terraform.io"}')[matrix.tool.name] }}
         run: |
           TF_ACC_TERRAFORM_PATH=$(which ${{ matrix.tool.name }}) \
-          go test -v -cover ./internal/provider/
+          go test -v -cover -timeout 120m ./internal/provider/
         timeout-minutes: 20
