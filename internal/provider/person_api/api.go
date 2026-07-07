@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"golang.org/x/oauth2"
@@ -157,12 +158,24 @@ func (client *Client) GetPersonByEmail(ctx context.Context, email string) (*Pers
 		return nil, err
 	}
 
-	// Convert map keys into a list of strings
-	keys := make([]string, 0, len(person.AccessInformation.Mozilliansorg.Values))
-	for key := range person.AccessInformation.Mozilliansorg.Values {
-		keys = append(keys, key)
-	}
-	person.AccessInformation.Mozilliansorg.List = keys
+	flattenAccessInformation(&person)
 
 	return &person, nil
+}
+
+// flattenAccessInformation converts the Mozilliansorg and LDAP access information
+// Values maps into lists of group names stored in their respective List fields.
+func flattenAccessInformation(person *Person) {
+	person.AccessInformation.Mozilliansorg.List = mapKeys(person.AccessInformation.Mozilliansorg.Values)
+	person.AccessInformation.LDAP.List = mapKeys(person.AccessInformation.LDAP.Values)
+}
+
+// mapKeys returns the keys of m as a slice of strings.
+func mapKeys[V any](m map[string]V) []string {
+	keys := make([]string, 0, len(m))
+	for key := range m {
+		keys = append(keys, key)
+	}
+	slices.Sort(keys)
+	return keys
 }
