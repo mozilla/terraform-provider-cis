@@ -171,6 +171,7 @@ func (p *CISProvider) Resources(ctx context.Context) []func() resource.Resource 
 func (p *CISProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewPeopleDataSource,
+		NewGroupDataSource,
 	}
 }
 
