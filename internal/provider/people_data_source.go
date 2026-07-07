@@ -42,47 +42,58 @@ func (d *PeopleDataSource) Metadata(ctx context.Context, req datasource.Metadata
 	resp.TypeName = req.ProviderTypeName + "_people"
 }
 
+// PeopleAttributes returns the schema attributes describing a person. It is
+// shared by the cis_people data source and the cis_group members list.
+//
+// When readOnly is false (the cis_people data source), email, id, and username
+// are Optional because they identify which person to look up. When readOnly is
+// true (embedded as cis_group members output), every attribute is Computed.
+func PeopleAttributes(readOnly bool) map[string]schema.Attribute {
+	// queryField is Optional when used as a lookup input, Computed when the whole
+	// object is read-only output.
+	queryField := func(description string) schema.StringAttribute {
+		return schema.StringAttribute{
+			MarkdownDescription: description,
+			Optional:            !readOnly,
+			Computed:            readOnly,
+		}
+	}
+
+	return map[string]schema.Attribute{
+		"email": queryField("People email address"),
+		"github_id": schema.StringAttribute{
+			MarkdownDescription: "GitHub ID",
+			Computed:            true,
+		},
+		"github_node_id": schema.StringAttribute{
+			MarkdownDescription: "GitHub node ID",
+			Computed:            true,
+		},
+		"github_username": schema.StringAttribute{
+			MarkdownDescription: "GitHub username",
+			Computed:            true,
+		},
+		"id": queryField("People user identifier"),
+		"ldap_groups": schema.ListAttribute{
+			ElementType:         types.StringType,
+			MarkdownDescription: "LDAP groups the user is in",
+			Computed:            true,
+		},
+		"mozilliansorg_groups": schema.ListAttribute{
+			ElementType:         types.StringType,
+			MarkdownDescription: "Mozilliansorg groups the user is in",
+			Computed:            true,
+		},
+		"username": queryField("People username"),
+	}
+}
+
 func (d *PeopleDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "People data source",
 
-		Attributes: map[string]schema.Attribute{
-			"email": schema.StringAttribute{
-				MarkdownDescription: "People email address",
-				Optional:            true,
-			},
-			"github_id": schema.StringAttribute{
-				MarkdownDescription: "GitHub ID",
-				Computed:            true,
-			},
-			"github_node_id": schema.StringAttribute{
-				MarkdownDescription: "GitHub node ID",
-				Computed:            true,
-			},
-			"github_username": schema.StringAttribute{
-				MarkdownDescription: "GitHub username",
-				Computed:            true,
-			},
-			"id": schema.StringAttribute{
-				MarkdownDescription: "People user identifier",
-				Optional:            true,
-			},
-			"ldap_groups": schema.ListAttribute{
-				ElementType:         types.StringType,
-				MarkdownDescription: "LDAP groups the user is in",
-				Computed:            true,
-			},
-			"mozilliansorg_groups": schema.ListAttribute{
-				ElementType:         types.StringType,
-				MarkdownDescription: "Mozilliansorg groups the user is in",
-				Computed:            true,
-			},
-			"username": schema.StringAttribute{
-				MarkdownDescription: "People username",
-				Optional:            true,
-			},
-		},
+		Attributes: PeopleAttributes(false),
 	}
 }
 
