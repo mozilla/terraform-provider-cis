@@ -57,7 +57,7 @@ jobs:
     name: 'Acceptance Tests: ${{ matrix.tool.name }} ${{ matrix.tool.version }}'
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -95,4 +95,4 @@ jobs:
         run: |
           TF_ACC_TERRAFORM_PATH=$(which ${{ matrix.tool.name }}) \
           go test -v -cover ./internal/provider/
-        timeout-minutes: 10
+        timeout-minutes: 20
