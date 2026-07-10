@@ -20,8 +20,18 @@ func TestAccExampleDataSource(t *testing.T) {
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
 						"data.cis_people.test",
+						tfjsonpath.New("active"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"data.cis_people.test",
 						tfjsonpath.New("email"),
 						knownvalue.StringExact("jbuckley@mozilla.com"),
+					),
+					statecheck.ExpectKnownValue(
+						"data.cis_people.test",
+						tfjsonpath.New("first_name"),
+						knownvalue.StringExact("Jon"),
 					),
 					statecheck.ExpectKnownValue(
 						"data.cis_people.test",
@@ -45,10 +55,35 @@ func TestAccExampleDataSource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"data.cis_people.test",
+						tfjsonpath.New("is_director"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"data.cis_people.test",
+						tfjsonpath.New("is_manager"),
+						knownvalue.Bool(false),
+					),
+					statecheck.ExpectKnownValue(
+						"data.cis_people.test",
+						tfjsonpath.New("is_staff"),
+						knownvalue.Bool(true),
+					),
+					statecheck.ExpectKnownValue(
+						"data.cis_people.test",
+						tfjsonpath.New("last_name"),
+						knownvalue.StringExact("Buckley"),
+					),
+					statecheck.ExpectKnownValue(
+						"data.cis_people.test",
 						tfjsonpath.New("ldap_groups"),
 						knownvalue.ListPartial(map[int]knownvalue.Check{
 							0: knownvalue.StringExact("gh_access_mozilla"),
 						}),
+					),
+					statecheck.ExpectKnownValue(
+						"data.cis_people.test",
+						tfjsonpath.New("manager_email"),
+						knownvalue.StringExact("htahsildoost@mozilla.com"),
 					),
 					statecheck.ExpectKnownValue(
 						"data.cis_people.test",
@@ -59,8 +94,23 @@ func TestAccExampleDataSource(t *testing.T) {
 					),
 					statecheck.ExpectKnownValue(
 						"data.cis_people.test",
+						tfjsonpath.New("team"),
+						knownvalue.StringExact("Site Reliability Engineering (Hamid Tahsildoost)"),
+					),
+					statecheck.ExpectKnownValue(
+						"data.cis_people.test",
+						tfjsonpath.New("title"),
+						knownvalue.StringExact("Senior Staff Software Engineer"),
+					),
+					statecheck.ExpectKnownValue(
+						"data.cis_people.test",
 						tfjsonpath.New("username"),
 						knownvalue.StringExact("jbuck"),
+					),
+					statecheck.ExpectKnownValue(
+						"data.cis_people.test",
+						tfjsonpath.New("worker_type"),
+						knownvalue.StringExact("Employee"),
 					),
 				},
 			},
