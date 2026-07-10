@@ -50,11 +50,22 @@ output "example" {
 
 Read-Only:
 
+- `active` (Boolean) Whether the person's account is active
+- `cost_center` (Number) Cost center the person belongs to
 - `email` (String) People email address
+- `first_name` (String) First name
 - `github_id` (String) GitHub ID
 - `github_node_id` (String) GitHub node ID
 - `github_username` (String) GitHub username
 - `id` (String) People user identifier
+- `is_director` (Boolean) Whether the person is a director
+- `is_manager` (Boolean) Whether the person is a manager
+- `is_staff` (Boolean) Whether the person is Mozilla staff
+- `last_name` (String) Last name
 - `ldap_groups` (List of String) LDAP groups the user is in
+- `manager_email` (String) Primary work email of the person's manager
 - `mozilliansorg_groups` (List of String) Mozilliansorg groups the user is in
+- `team` (String) Team
+- `title` (String) Job title
 - `username` (String) People username
+- `worker_type` (String) Worker type (e.g. Employee)

@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"terraform-provider-cis/internal/provider/person_api"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/datasourcevalidator"
@@ -28,14 +29,25 @@ type PeopleDataSource struct {
 
 // PeopleDataSourceModel describes the data source data model.
 type PeopleDataSourceModel struct {
+	Active               types.Bool   `tfsdk:"active"`
+	Cost_Center          types.Int64  `tfsdk:"cost_center"`
 	Email                types.String `tfsdk:"email"`
+	First_Name           types.String `tfsdk:"first_name"`
 	GitHub_Id            types.String `tfsdk:"github_id"`
 	GitHub_Node_Id       types.String `tfsdk:"github_node_id"`
 	GitHub_Username      types.String `tfsdk:"github_username"`
 	Id                   types.String `tfsdk:"id"`
+	Is_Director          types.Bool   `tfsdk:"is_director"`
+	Is_Manager           types.Bool   `tfsdk:"is_manager"`
+	Is_Staff             types.Bool   `tfsdk:"is_staff"`
+	Last_Name            types.String `tfsdk:"last_name"`
 	LDAP_Groups          types.List   `tfsdk:"ldap_groups"`
+	Manager_Email        types.String `tfsdk:"manager_email"`
 	Mozilliansorg_Groups types.List   `tfsdk:"mozilliansorg_groups"`
+	Team                 types.String `tfsdk:"team"`
+	Title                types.String `tfsdk:"title"`
 	Username             types.String `tfsdk:"username"`
+	Worker_Type          types.String `tfsdk:"worker_type"`
 }
 
 func (d *PeopleDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -60,7 +72,19 @@ func PeopleAttributes(readOnly bool) map[string]schema.Attribute {
 	}
 
 	return map[string]schema.Attribute{
+		"active": schema.BoolAttribute{
+			MarkdownDescription: "Whether the person's account is active",
+			Computed:            true,
+		},
+		"cost_center": schema.Int64Attribute{
+			MarkdownDescription: "Cost center the person belongs to",
+			Computed:            true,
+		},
 		"email": queryField("People email address"),
+		"first_name": schema.StringAttribute{
+			MarkdownDescription: "First name",
+			Computed:            true,
+		},
 		"github_id": schema.StringAttribute{
 			MarkdownDescription: "GitHub ID",
 			Computed:            true,
@@ -74,9 +98,29 @@ func PeopleAttributes(readOnly bool) map[string]schema.Attribute {
 			Computed:            true,
 		},
 		"id": queryField("People user identifier"),
+		"is_director": schema.BoolAttribute{
+			MarkdownDescription: "Whether the person is a director",
+			Computed:            true,
+		},
+		"is_manager": schema.BoolAttribute{
+			MarkdownDescription: "Whether the person is a manager",
+			Computed:            true,
+		},
+		"is_staff": schema.BoolAttribute{
+			MarkdownDescription: "Whether the person is Mozilla staff",
+			Computed:            true,
+		},
+		"last_name": schema.StringAttribute{
+			MarkdownDescription: "Last name",
+			Computed:            true,
+		},
 		"ldap_groups": schema.ListAttribute{
 			ElementType:         types.StringType,
 			MarkdownDescription: "LDAP groups the user is in",
+			Computed:            true,
+		},
+		"manager_email": schema.StringAttribute{
+			MarkdownDescription: "Primary work email of the person's manager",
 			Computed:            true,
 		},
 		"mozilliansorg_groups": schema.ListAttribute{
@@ -84,7 +128,19 @@ func PeopleAttributes(readOnly bool) map[string]schema.Attribute {
 			MarkdownDescription: "Mozilliansorg groups the user is in",
 			Computed:            true,
 		},
+		"team": schema.StringAttribute{
+			MarkdownDescription: "Team",
+			Computed:            true,
+		},
+		"title": schema.StringAttribute{
+			MarkdownDescription: "Job title",
+			Computed:            true,
+		},
 		"username": queryField("People username"),
+		"worker_type": schema.StringAttribute{
+			MarkdownDescription: "Worker type (e.g. Employee)",
+			Computed:            true,
+		},
 	}
 }
 
@@ -194,6 +250,14 @@ func personToModel(ctx context.Context, person *person_api.Person) (PeopleDataSo
 	var diags diag.Diagnostics
 
 	data.Id = types.StringValue(person.UserID.Value)
+	data.Active = types.BoolValue(person.Active.Value)
+	// cost_center arrives as a float-formatted string (e.g. "14150.0"); expose it
+	// as an integer. Leave it null if it is absent or unparseable.
+	if costCenter, err := strconv.ParseFloat(person.StaffInformation.CostCenter.Value, 64); err == nil {
+		data.Cost_Center = types.Int64Value(int64(costCenter))
+	}
+	data.First_Name = types.StringValue(person.FirstName.Value)
+	data.Last_Name = types.StringValue(person.LastName.Value)
 
 	if person.Identities.GithubIDV3 != nil {
 		data.GitHub_Id = types.StringValue(person.Identities.GithubIDV3.Value)
@@ -210,6 +274,18 @@ func personToModel(ctx context.Context, person *person_api.Person) (PeopleDataSo
 	groups, groupDiags := types.ListValueFrom(ctx, types.StringType, person.AccessInformation.Mozilliansorg.List)
 	diags.Append(groupDiags...)
 	data.Mozilliansorg_Groups = groups
+
+	// managers_primary_work_email lives in the HRIS values map, which is untyped.
+	if managerEmail, ok := person.AccessInformation.Hris.Values["managers_primary_work_email"].(string); ok {
+		data.Manager_Email = types.StringValue(managerEmail)
+	}
+
+	data.Is_Director = types.BoolValue(person.StaffInformation.Director.Value)
+	data.Is_Manager = types.BoolValue(person.StaffInformation.Manager.Value)
+	data.Is_Staff = types.BoolValue(person.StaffInformation.Staff.Value)
+	data.Team = types.StringValue(person.StaffInformation.Team.Value)
+	data.Title = types.StringValue(person.StaffInformation.Title.Value)
+	data.Worker_Type = types.StringValue(person.StaffInformation.WorkerType.Value)
 
 	data.Username = types.StringValue(person.PrimaryUsername.Value)
 

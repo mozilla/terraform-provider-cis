@@ -31,4 +31,5 @@ provider "cis" {}
 - `auth0_client_id` (String, Sensitive) Auth0 client ID
 - `auth0_client_secret` (String, Sensitive) Auth0 client secret
 - `auth0_endpoint` (String) Auth0 endpoint
+- `auth0_scopes` (List of String) Auth0 OAuth2 scopes to request. May also be set with the `AUTH0_SCOPES` environment variable (space-separated). If unset, no scopes are requested and the access token is granted the scopes the client was registered with.
 - `person_endpoint` (String) CIS person endpoint

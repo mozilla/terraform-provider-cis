@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime"
 	"strconv"
+	"strings"
 	"terraform-provider-cis/internal/provider/person_api"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -35,6 +36,7 @@ type CISProviderModel struct {
 	Auth0Endpoint     types.String `tfsdk:"auth0_endpoint"`
 	Auth0ClientID     types.String `tfsdk:"auth0_client_id"`
 	Auth0ClientSecret types.String `tfsdk:"auth0_client_secret"`
+	Auth0Scopes       types.List   `tfsdk:"auth0_scopes"`
 	PersonEndpoint    types.String `tfsdk:"person_endpoint"`
 }
 
@@ -63,6 +65,12 @@ func (p *CISProvider) Schema(ctx context.Context, req provider.SchemaRequest, re
 				Optional:            true,
 				Sensitive:           true,
 			},
+			"auth0_scopes": schema.ListAttribute{
+				ElementType:         types.StringType,
+				Description:         "Auth0 OAuth2 scopes to request. May also be set with the AUTH0_SCOPES environment variable (space-separated). If unset, no scopes are requested and the access token is granted the scopes the client was registered with.",
+				MarkdownDescription: "Auth0 OAuth2 scopes to request. May also be set with the `AUTH0_SCOPES` environment variable (space-separated). If unset, no scopes are requested and the access token is granted the scopes the client was registered with.",
+				Optional:            true,
+			},
 			"person_endpoint": schema.StringAttribute{
 				Description:         "CIS person endpoint",
 				MarkdownDescription: "CIS person endpoint",
@@ -88,6 +96,15 @@ func (p *CISProvider) Configure(ctx context.Context, req provider.ConfigureReque
 	auth0_client_secret := os.Getenv("AUTH0_CLIENT_SECRET")
 	person_endpoint := os.Getenv("PERSON_ENDPOINT")
 
+	// Scopes default to none, in which case the access token is granted the
+	// scopes the client was registered with. They can be set with the
+	// AUTH0_SCOPES environment variable (space-separated) or, taking
+	// precedence, the auth0_scopes provider attribute.
+	auth0_scopes := []string{}
+	if env_scopes := strings.Fields(os.Getenv("AUTH0_SCOPES")); len(env_scopes) > 0 {
+		auth0_scopes = env_scopes
+	}
+
 	if data.Auth0Endpoint.ValueString() != "" {
 		auth0_endpoint = data.Auth0Endpoint.ValueString()
 	}
@@ -96,6 +113,12 @@ func (p *CISProvider) Configure(ctx context.Context, req provider.ConfigureReque
 	}
 	if data.Auth0ClientSecret.ValueString() != "" {
 		auth0_client_secret = data.Auth0ClientSecret.ValueString()
+	}
+	if !data.Auth0Scopes.IsNull() {
+		resp.Diagnostics.Append(data.Auth0Scopes.ElementsAs(ctx, &auth0_scopes, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 	}
 	if data.PersonEndpoint.ValueString() != "" {
 		person_endpoint = data.PersonEndpoint.ValueString()
@@ -112,6 +135,7 @@ func (p *CISProvider) Configure(ctx context.Context, req provider.ConfigureReque
 		"auth0_endpoint":      auth0_endpoint,
 		"auth0_client_id":     auth0_client_id,
 		"auth0_client_secret": auth0_client_secret,
+		"auth0_scopes":        auth0_scopes,
 		"person_endpoint":     person_endpoint,
 		"HasError()":          strconv.FormatBool(resp.Diagnostics.HasError()),
 	})
@@ -140,15 +164,7 @@ func (p *CISProvider) Configure(ctx context.Context, req provider.ConfigureReque
 
 	tflog.Info(ctx, "Configuring OAuth2 client")
 
-	client := person_api.NewClient(auth0_client_id, auth0_client_secret, "api.sso.mozilla.com", auth0_endpoint, []string{
-		// "classification:public",
-		"classification:workgroup",
-		// "display:none",
-		// "display:public",
-		// "display:authenticated",
-		// "display:vouched",
-		"display:staff",
-	}, person_endpoint, buildUserAgent(p.version, req.TerraformVersion))
+	client := person_api.NewClient(auth0_client_id, auth0_client_secret, "api.sso.mozilla.com", auth0_endpoint, auth0_scopes, person_endpoint, buildUserAgent(p.version, req.TerraformVersion))
 
 	err := client.GetAccessToken(ctx)
 	if err != nil {
