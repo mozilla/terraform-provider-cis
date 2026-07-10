@@ -47,6 +47,7 @@ output "example" {
 - `github_id` (String) GitHub ID
 - `github_node_id` (String) GitHub node ID
 - `github_username` (String) GitHub username
+- `is_manager` (Boolean) Whether the person is a manager
 - `last_name` (String) Last name
 - `ldap_groups` (List of String) LDAP groups the user is in
 - `manager_email` (String) Primary work email of the person's manager
