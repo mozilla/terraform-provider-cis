@@ -57,3 +57,4 @@ output "example" {
 - `mozilliansorg_groups` (List of String) Mozilliansorg groups the user is in
 - `team` (String) Team
 - `title` (String) Job title
+- `worker_type` (String) Worker type (e.g. Employee)

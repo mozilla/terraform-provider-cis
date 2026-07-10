@@ -45,6 +45,7 @@ type PeopleDataSourceModel struct {
 	Team                 types.String `tfsdk:"team"`
 	Title                types.String `tfsdk:"title"`
 	Username             types.String `tfsdk:"username"`
+	Worker_Type          types.String `tfsdk:"worker_type"`
 }
 
 func (d *PeopleDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -130,6 +131,10 @@ func PeopleAttributes(readOnly bool) map[string]schema.Attribute {
 			Computed:            true,
 		},
 		"username": queryField("People username"),
+		"worker_type": schema.StringAttribute{
+			MarkdownDescription: "Worker type (e.g. Employee)",
+			Computed:            true,
+		},
 	}
 }
 
@@ -269,6 +274,7 @@ func personToModel(ctx context.Context, person *person_api.Person) (PeopleDataSo
 	data.Is_Staff = types.BoolValue(person.StaffInformation.Staff.Value)
 	data.Team = types.StringValue(person.StaffInformation.Team.Value)
 	data.Title = types.StringValue(person.StaffInformation.Title.Value)
+	data.Worker_Type = types.StringValue(person.StaffInformation.WorkerType.Value)
 
 	data.Username = types.StringValue(person.PrimaryUsername.Value)
 

@@ -67,3 +67,4 @@ Read-Only:
 - `team` (String) Team
 - `title` (String) Job title
 - `username` (String) People username
+- `worker_type` (String) Worker type (e.g. Employee)
