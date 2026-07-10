@@ -47,7 +47,7 @@ func TestAccExampleDataSource(t *testing.T) {
 						"data.cis_people.test",
 						tfjsonpath.New("ldap_groups"),
 						knownvalue.ListPartial(map[int]knownvalue.Check{
-							0: knownvalue.StringExact("inventory"),
+							0: knownvalue.StringExact("gh_access_mozilla"),
 						}),
 					),
 					statecheck.ExpectKnownValue(
