@@ -43,6 +43,7 @@ output "example" {
 
 ### Read-Only
 
+- `active` (Boolean) Whether the person's account is active
 - `first_name` (String) First name
 - `github_id` (String) GitHub ID
 - `github_node_id` (String) GitHub node ID

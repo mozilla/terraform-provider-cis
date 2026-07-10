@@ -28,6 +28,7 @@ type PeopleDataSource struct {
 
 // PeopleDataSourceModel describes the data source data model.
 type PeopleDataSourceModel struct {
+	Active               types.Bool   `tfsdk:"active"`
 	Email                types.String `tfsdk:"email"`
 	First_Name           types.String `tfsdk:"first_name"`
 	GitHub_Id            types.String `tfsdk:"github_id"`
@@ -68,6 +69,10 @@ func PeopleAttributes(readOnly bool) map[string]schema.Attribute {
 	}
 
 	return map[string]schema.Attribute{
+		"active": schema.BoolAttribute{
+			MarkdownDescription: "Whether the person's account is active",
+			Computed:            true,
+		},
 		"email": queryField("People email address"),
 		"first_name": schema.StringAttribute{
 			MarkdownDescription: "First name",
@@ -234,6 +239,7 @@ func personToModel(ctx context.Context, person *person_api.Person) (PeopleDataSo
 	var diags diag.Diagnostics
 
 	data.Id = types.StringValue(person.UserID.Value)
+	data.Active = types.BoolValue(person.Active.Value)
 	data.First_Name = types.StringValue(person.FirstName.Value)
 	data.Last_Name = types.StringValue(person.LastName.Value)
 

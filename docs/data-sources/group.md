@@ -50,6 +50,7 @@ output "example" {
 
 Read-Only:
 
+- `active` (Boolean) Whether the person's account is active
 - `email` (String) People email address
 - `first_name` (String) First name
 - `github_id` (String) GitHub ID
