@@ -34,6 +34,7 @@ type PeopleDataSourceModel struct {
 	GitHub_Node_Id       types.String `tfsdk:"github_node_id"`
 	GitHub_Username      types.String `tfsdk:"github_username"`
 	Id                   types.String `tfsdk:"id"`
+	Last_Name            types.String `tfsdk:"last_name"`
 	LDAP_Groups          types.List   `tfsdk:"ldap_groups"`
 	Mozilliansorg_Groups types.List   `tfsdk:"mozilliansorg_groups"`
 	Username             types.String `tfsdk:"username"`
@@ -79,6 +80,10 @@ func PeopleAttributes(readOnly bool) map[string]schema.Attribute {
 			Computed:            true,
 		},
 		"id": queryField("People user identifier"),
+		"last_name": schema.StringAttribute{
+			MarkdownDescription: "Last name",
+			Computed:            true,
+		},
 		"ldap_groups": schema.ListAttribute{
 			ElementType:         types.StringType,
 			MarkdownDescription: "LDAP groups the user is in",
@@ -200,6 +205,7 @@ func personToModel(ctx context.Context, person *person_api.Person) (PeopleDataSo
 
 	data.Id = types.StringValue(person.UserID.Value)
 	data.First_Name = types.StringValue(person.FirstName.Value)
+	data.Last_Name = types.StringValue(person.LastName.Value)
 
 	if person.Identities.GithubIDV3 != nil {
 		data.GitHub_Id = types.StringValue(person.Identities.GithubIDV3.Value)
