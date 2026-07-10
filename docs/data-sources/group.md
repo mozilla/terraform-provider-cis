@@ -58,6 +58,7 @@ Read-Only:
 - `id` (String) People user identifier
 - `last_name` (String) Last name
 - `ldap_groups` (List of String) LDAP groups the user is in
+- `manager_email` (String) Primary work email of the person's manager
 - `mozilliansorg_groups` (List of String) Mozilliansorg groups the user is in
 - `team` (String) Team
 - `title` (String) Job title

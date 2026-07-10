@@ -36,6 +36,7 @@ type PeopleDataSourceModel struct {
 	Id                   types.String `tfsdk:"id"`
 	Last_Name            types.String `tfsdk:"last_name"`
 	LDAP_Groups          types.List   `tfsdk:"ldap_groups"`
+	Manager_Email        types.String `tfsdk:"manager_email"`
 	Mozilliansorg_Groups types.List   `tfsdk:"mozilliansorg_groups"`
 	Team                 types.String `tfsdk:"team"`
 	Title                types.String `tfsdk:"title"`
@@ -89,6 +90,10 @@ func PeopleAttributes(readOnly bool) map[string]schema.Attribute {
 		"ldap_groups": schema.ListAttribute{
 			ElementType:         types.StringType,
 			MarkdownDescription: "LDAP groups the user is in",
+			Computed:            true,
+		},
+		"manager_email": schema.StringAttribute{
+			MarkdownDescription: "Primary work email of the person's manager",
 			Computed:            true,
 		},
 		"mozilliansorg_groups": schema.ListAttribute{
@@ -232,6 +237,11 @@ func personToModel(ctx context.Context, person *person_api.Person) (PeopleDataSo
 	groups, groupDiags := types.ListValueFrom(ctx, types.StringType, person.AccessInformation.Mozilliansorg.List)
 	diags.Append(groupDiags...)
 	data.Mozilliansorg_Groups = groups
+
+	// managers_primary_work_email lives in the HRIS values map, which is untyped.
+	if managerEmail, ok := person.AccessInformation.Hris.Values["managers_primary_work_email"].(string); ok {
+		data.Manager_Email = types.StringValue(managerEmail)
+	}
 
 	data.Team = types.StringValue(person.StaffInformation.Team.Value)
 	data.Title = types.StringValue(person.StaffInformation.Title.Value)
