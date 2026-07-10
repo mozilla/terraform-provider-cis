@@ -49,6 +49,7 @@ output "example" {
 - `github_username` (String) GitHub username
 - `is_director` (Boolean) Whether the person is a director
 - `is_manager` (Boolean) Whether the person is a manager
+- `is_staff` (Boolean) Whether the person is Mozilla staff
 - `last_name` (String) Last name
 - `ldap_groups` (List of String) LDAP groups the user is in
 - `manager_email` (String) Primary work email of the person's manager
