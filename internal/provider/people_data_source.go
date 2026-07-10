@@ -34,6 +34,7 @@ type PeopleDataSourceModel struct {
 	GitHub_Node_Id       types.String `tfsdk:"github_node_id"`
 	GitHub_Username      types.String `tfsdk:"github_username"`
 	Id                   types.String `tfsdk:"id"`
+	Is_Director          types.Bool   `tfsdk:"is_director"`
 	Is_Manager           types.Bool   `tfsdk:"is_manager"`
 	Last_Name            types.String `tfsdk:"last_name"`
 	LDAP_Groups          types.List   `tfsdk:"ldap_groups"`
@@ -84,6 +85,10 @@ func PeopleAttributes(readOnly bool) map[string]schema.Attribute {
 			Computed:            true,
 		},
 		"id": queryField("People user identifier"),
+		"is_director": schema.BoolAttribute{
+			MarkdownDescription: "Whether the person is a director",
+			Computed:            true,
+		},
 		"is_manager": schema.BoolAttribute{
 			MarkdownDescription: "Whether the person is a manager",
 			Computed:            true,
@@ -248,6 +253,7 @@ func personToModel(ctx context.Context, person *person_api.Person) (PeopleDataSo
 		data.Manager_Email = types.StringValue(managerEmail)
 	}
 
+	data.Is_Director = types.BoolValue(person.StaffInformation.Director.Value)
 	data.Is_Manager = types.BoolValue(person.StaffInformation.Manager.Value)
 	data.Team = types.StringValue(person.StaffInformation.Team.Value)
 	data.Title = types.StringValue(person.StaffInformation.Title.Value)
