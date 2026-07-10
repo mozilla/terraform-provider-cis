@@ -59,4 +59,5 @@ Read-Only:
 - `last_name` (String) Last name
 - `ldap_groups` (List of String) LDAP groups the user is in
 - `mozilliansorg_groups` (List of String) Mozilliansorg groups the user is in
+- `title` (String) Job title
 - `username` (String) People username

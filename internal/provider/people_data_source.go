@@ -37,6 +37,7 @@ type PeopleDataSourceModel struct {
 	Last_Name            types.String `tfsdk:"last_name"`
 	LDAP_Groups          types.List   `tfsdk:"ldap_groups"`
 	Mozilliansorg_Groups types.List   `tfsdk:"mozilliansorg_groups"`
+	Title                types.String `tfsdk:"title"`
 	Username             types.String `tfsdk:"username"`
 }
 
@@ -92,6 +93,10 @@ func PeopleAttributes(readOnly bool) map[string]schema.Attribute {
 		"mozilliansorg_groups": schema.ListAttribute{
 			ElementType:         types.StringType,
 			MarkdownDescription: "Mozilliansorg groups the user is in",
+			Computed:            true,
+		},
+		"title": schema.StringAttribute{
+			MarkdownDescription: "Job title",
 			Computed:            true,
 		},
 		"username": queryField("People username"),
@@ -222,6 +227,8 @@ func personToModel(ctx context.Context, person *person_api.Person) (PeopleDataSo
 	groups, groupDiags := types.ListValueFrom(ctx, types.StringType, person.AccessInformation.Mozilliansorg.List)
 	diags.Append(groupDiags...)
 	data.Mozilliansorg_Groups = groups
+
+	data.Title = types.StringValue(person.StaffInformation.Title.Value)
 
 	data.Username = types.StringValue(person.PrimaryUsername.Value)
 
