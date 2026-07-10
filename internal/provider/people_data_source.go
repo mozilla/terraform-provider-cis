@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"terraform-provider-cis/internal/provider/person_api"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/datasourcevalidator"
@@ -29,6 +30,7 @@ type PeopleDataSource struct {
 // PeopleDataSourceModel describes the data source data model.
 type PeopleDataSourceModel struct {
 	Active               types.Bool   `tfsdk:"active"`
+	Cost_Center          types.Int64  `tfsdk:"cost_center"`
 	Email                types.String `tfsdk:"email"`
 	First_Name           types.String `tfsdk:"first_name"`
 	GitHub_Id            types.String `tfsdk:"github_id"`
@@ -72,6 +74,10 @@ func PeopleAttributes(readOnly bool) map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"active": schema.BoolAttribute{
 			MarkdownDescription: "Whether the person's account is active",
+			Computed:            true,
+		},
+		"cost_center": schema.Int64Attribute{
+			MarkdownDescription: "Cost center the person belongs to",
 			Computed:            true,
 		},
 		"email": queryField("People email address"),
@@ -245,6 +251,11 @@ func personToModel(ctx context.Context, person *person_api.Person) (PeopleDataSo
 
 	data.Id = types.StringValue(person.UserID.Value)
 	data.Active = types.BoolValue(person.Active.Value)
+	// cost_center arrives as a float-formatted string (e.g. "14150.0"); expose it
+	// as an integer. Leave it null if it is absent or unparseable.
+	if costCenter, err := strconv.ParseFloat(person.StaffInformation.CostCenter.Value, 64); err == nil {
+		data.Cost_Center = types.Int64Value(int64(costCenter))
+	}
 	data.First_Name = types.StringValue(person.FirstName.Value)
 	data.Last_Name = types.StringValue(person.LastName.Value)
 

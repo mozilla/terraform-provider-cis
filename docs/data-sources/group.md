@@ -51,6 +51,7 @@ output "example" {
 Read-Only:
 
 - `active` (Boolean) Whether the person's account is active
+- `cost_center` (Number) Cost center the person belongs to
 - `email` (String) People email address
 - `first_name` (String) First name
 - `github_id` (String) GitHub ID
