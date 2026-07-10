@@ -51,6 +51,7 @@ output "example" {
 Read-Only:
 
 - `email` (String) People email address
+- `first_name` (String) First name
 - `github_id` (String) GitHub ID
 - `github_node_id` (String) GitHub node ID
 - `github_username` (String) GitHub username

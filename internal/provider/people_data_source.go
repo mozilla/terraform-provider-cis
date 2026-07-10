@@ -29,6 +29,7 @@ type PeopleDataSource struct {
 // PeopleDataSourceModel describes the data source data model.
 type PeopleDataSourceModel struct {
 	Email                types.String `tfsdk:"email"`
+	First_Name           types.String `tfsdk:"first_name"`
 	GitHub_Id            types.String `tfsdk:"github_id"`
 	GitHub_Node_Id       types.String `tfsdk:"github_node_id"`
 	GitHub_Username      types.String `tfsdk:"github_username"`
@@ -61,6 +62,10 @@ func PeopleAttributes(readOnly bool) map[string]schema.Attribute {
 
 	return map[string]schema.Attribute{
 		"email": queryField("People email address"),
+		"first_name": schema.StringAttribute{
+			MarkdownDescription: "First name",
+			Computed:            true,
+		},
 		"github_id": schema.StringAttribute{
 			MarkdownDescription: "GitHub ID",
 			Computed:            true,
@@ -194,6 +199,7 @@ func personToModel(ctx context.Context, person *person_api.Person) (PeopleDataSo
 	var diags diag.Diagnostics
 
 	data.Id = types.StringValue(person.UserID.Value)
+	data.First_Name = types.StringValue(person.FirstName.Value)
 
 	if person.Identities.GithubIDV3 != nil {
 		data.GitHub_Id = types.StringValue(person.Identities.GithubIDV3.Value)
