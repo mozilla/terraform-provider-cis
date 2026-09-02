@@ -30,9 +30,12 @@ type PeopleDataSource struct {
 // PeopleDataSourceModel describes the data source data model.
 type PeopleDataSourceModel struct {
 	Active               types.Bool   `tfsdk:"active"`
+	Bugzilla_Email       types.String `tfsdk:"bugzilla_email"`
+	Bugzilla_Id          types.String `tfsdk:"bugzilla_id"`
 	Cost_Center          types.Int64  `tfsdk:"cost_center"`
 	Email                types.String `tfsdk:"email"`
 	First_Name           types.String `tfsdk:"first_name"`
+	GitHub_Email         types.String `tfsdk:"github_email"`
 	GitHub_Id            types.String `tfsdk:"github_id"`
 	GitHub_Node_Id       types.String `tfsdk:"github_node_id"`
 	GitHub_Username      types.String `tfsdk:"github_username"`
@@ -42,9 +45,12 @@ type PeopleDataSourceModel struct {
 	Is_Staff             types.Bool   `tfsdk:"is_staff"`
 	Last_Name            types.String `tfsdk:"last_name"`
 	LDAP_Groups          types.List   `tfsdk:"ldap_groups"`
+	Location             types.String `tfsdk:"location"`
 	Manager_Email        types.String `tfsdk:"manager_email"`
 	Mozilliansorg_Groups types.List   `tfsdk:"mozilliansorg_groups"`
+	Office_Location      types.String `tfsdk:"office_location"`
 	Team                 types.String `tfsdk:"team"`
+	Timezone             types.String `tfsdk:"timezone"`
 	Title                types.String `tfsdk:"title"`
 	Username             types.String `tfsdk:"username"`
 	Worker_Type          types.String `tfsdk:"worker_type"`
@@ -76,6 +82,14 @@ func PeopleAttributes(readOnly bool) map[string]schema.Attribute {
 			MarkdownDescription: "Whether the person's account is active",
 			Computed:            true,
 		},
+		"bugzilla_email": schema.StringAttribute{
+			MarkdownDescription: "Bugzilla primary email address",
+			Computed:            true,
+		},
+		"bugzilla_id": schema.StringAttribute{
+			MarkdownDescription: "Bugzilla ID",
+			Computed:            true,
+		},
 		"cost_center": schema.Int64Attribute{
 			MarkdownDescription: "Cost center the person belongs to",
 			Computed:            true,
@@ -83,6 +97,10 @@ func PeopleAttributes(readOnly bool) map[string]schema.Attribute {
 		"email": queryField("People email address"),
 		"first_name": schema.StringAttribute{
 			MarkdownDescription: "First name",
+			Computed:            true,
+		},
+		"github_email": schema.StringAttribute{
+			MarkdownDescription: "GitHub primary email address",
 			Computed:            true,
 		},
 		"github_id": schema.StringAttribute{
@@ -119,6 +137,10 @@ func PeopleAttributes(readOnly bool) map[string]schema.Attribute {
 			MarkdownDescription: "LDAP groups the user is in",
 			Computed:            true,
 		},
+		"location": schema.StringAttribute{
+			MarkdownDescription: "Location",
+			Computed:            true,
+		},
 		"manager_email": schema.StringAttribute{
 			MarkdownDescription: "Primary work email of the person's manager",
 			Computed:            true,
@@ -128,8 +150,16 @@ func PeopleAttributes(readOnly bool) map[string]schema.Attribute {
 			MarkdownDescription: "Mozilliansorg groups the user is in",
 			Computed:            true,
 		},
+		"office_location": schema.StringAttribute{
+			MarkdownDescription: "Office location",
+			Computed:            true,
+		},
 		"team": schema.StringAttribute{
 			MarkdownDescription: "Team",
+			Computed:            true,
+		},
+		"timezone": schema.StringAttribute{
+			MarkdownDescription: "Timezone",
 			Computed:            true,
 		},
 		"title": schema.StringAttribute{
@@ -258,7 +288,18 @@ func personToModel(ctx context.Context, person *person_api.Person) (PeopleDataSo
 	}
 	data.First_Name = types.StringValue(person.FirstName.Value)
 	data.Last_Name = types.StringValue(person.LastName.Value)
+	data.Location = types.StringValue(person.Location.Value)
+	data.Timezone = types.StringValue(person.Timezone.Value)
 
+	if person.Identities.BugzillaMozillaOrgID != nil {
+		data.Bugzilla_Id = types.StringValue(person.Identities.BugzillaMozillaOrgID.Value)
+	}
+	if person.Identities.BugzillaMozillaOrgPrimaryEmail != nil {
+		data.Bugzilla_Email = types.StringValue(person.Identities.BugzillaMozillaOrgPrimaryEmail.Value)
+	}
+	if person.Identities.GithubPrimaryEmail != nil {
+		data.GitHub_Email = types.StringValue(person.Identities.GithubPrimaryEmail.Value)
+	}
 	if person.Identities.GithubIDV3 != nil {
 		data.GitHub_Id = types.StringValue(person.Identities.GithubIDV3.Value)
 	}
@@ -283,6 +324,7 @@ func personToModel(ctx context.Context, person *person_api.Person) (PeopleDataSo
 	data.Is_Director = types.BoolValue(person.StaffInformation.Director.Value)
 	data.Is_Manager = types.BoolValue(person.StaffInformation.Manager.Value)
 	data.Is_Staff = types.BoolValue(person.StaffInformation.Staff.Value)
+	data.Office_Location = types.StringValue(person.StaffInformation.OfficeLocation.Value)
 	data.Team = types.StringValue(person.StaffInformation.Team.Value)
 	data.Title = types.StringValue(person.StaffInformation.Title.Value)
 	data.Worker_Type = types.StringValue(person.StaffInformation.WorkerType.Value)

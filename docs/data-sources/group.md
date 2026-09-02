@@ -51,9 +51,12 @@ output "example" {
 Read-Only:
 
 - `active` (Boolean) Whether the person's account is active
+- `bugzilla_email` (String) Bugzilla primary email address
+- `bugzilla_id` (String) Bugzilla ID
 - `cost_center` (Number) Cost center the person belongs to
 - `email` (String) People email address
 - `first_name` (String) First name
+- `github_email` (String) GitHub primary email address
 - `github_id` (String) GitHub ID
 - `github_node_id` (String) GitHub node ID
 - `github_username` (String) GitHub username
@@ -63,9 +66,12 @@ Read-Only:
 - `is_staff` (Boolean) Whether the person is Mozilla staff
 - `last_name` (String) Last name
 - `ldap_groups` (List of String) LDAP groups the user is in
+- `location` (String) Location
 - `manager_email` (String) Primary work email of the person's manager
 - `mozilliansorg_groups` (List of String) Mozilliansorg groups the user is in
+- `office_location` (String) Office location
 - `team` (String) Team
+- `timezone` (String) Timezone
 - `title` (String) Job title
 - `username` (String) People username
 - `worker_type` (String) Worker type (e.g. Employee)
