@@ -177,7 +177,9 @@ func PeopleAttributes(readOnly bool) map[string]schema.Attribute {
 func (d *PeopleDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		MarkdownDescription: "People data source",
+		DeprecationMessage: deprecationMessage,
+		MarkdownDescription: "People data source.\n\n" +
+			deprecationNotice + " Use `personapi_people` in the successor provider.",
 
 		Attributes: PeopleAttributes(false),
 	}
