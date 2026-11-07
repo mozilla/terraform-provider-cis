@@ -55,6 +55,15 @@ signs:
       - "--detach-sign"
       - "${artifact}"
 release:
+  header: |
+    ## Deprecated provider
+
+    `mozilla/cis` has been superseded by [`mozilla/personapi`](https://github.com/mozilla/terraform-provider-personapi).
+    This is the final planned CIS release. Existing releases remain available.
+    See the [migration guide](https://github.com/mozilla/terraform-provider-cis/blob/main/MIGRATION.md) before switching.
+
+    This release adds deprecation warnings and documentation. Existing provider configuration,
+    `cis_people`, and `cis_group` remain supported with their existing behavior.
   extra_files:
     - glob: 'terraform-registry-manifest.json'
       name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'

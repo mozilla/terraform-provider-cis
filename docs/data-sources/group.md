@@ -4,11 +4,14 @@ page_title: "cis_group Data Source - cis"
 subcategory: ""
 description: |-
   Group data source. Lists the members of an LDAP group.
+  Deprecated: This provider has been superseded by mozilla/personapi https://github.com/mozilla/terraform-provider-personapi. Existing releases remain available. See the migration guide https://github.com/mozilla/terraform-provider-cis/blob/main/MIGRATION.md before switching. Use personapi_group in the successor provider.
 ---
 
 # cis_group (Data Source)
 
 Group data source. Lists the members of an LDAP group.
+
+**Deprecated:** This provider has been superseded by [`mozilla/personapi`](https://github.com/mozilla/terraform-provider-personapi). Existing releases remain available. See the [migration guide](https://github.com/mozilla/terraform-provider-cis/blob/main/MIGRATION.md) before switching. Use `personapi_group` in the successor provider.
 
 ## Example Usage
 

@@ -43,7 +43,9 @@ func (d *GroupDataSource) Metadata(ctx context.Context, req datasource.MetadataR
 
 func (d *GroupDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Group data source. Lists the members of an LDAP group.",
+		DeprecationMessage: deprecationMessage,
+		MarkdownDescription: "Group data source. Lists the members of an LDAP group.\n\n" +
+			deprecationNotice + " Use `personapi_group` in the successor provider.",
 
 		Attributes: map[string]schema.Attribute{
 			"ldap_group": schema.StringAttribute{

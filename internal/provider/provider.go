@@ -47,6 +47,9 @@ func (p *CISProvider) Metadata(ctx context.Context, req provider.MetadataRequest
 
 func (p *CISProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		DeprecationMessage: deprecationMessage,
+		MarkdownDescription: "Reads people and group membership from Mozilla's IAM Person API.\n\n" +
+			deprecationNotice,
 		Attributes: map[string]schema.Attribute{
 			"auth0_endpoint": schema.StringAttribute{
 				Description:         "Auth0 endpoint",

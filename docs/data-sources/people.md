@@ -3,12 +3,15 @@
 page_title: "cis_people Data Source - cis"
 subcategory: ""
 description: |-
-  People data source
+  People data source.
+  Deprecated: This provider has been superseded by mozilla/personapi https://github.com/mozilla/terraform-provider-personapi. Existing releases remain available. See the migration guide https://github.com/mozilla/terraform-provider-cis/blob/main/MIGRATION.md before switching. Use personapi_people in the successor provider.
 ---
 
 # cis_people (Data Source)
 
-People data source
+People data source.
+
+**Deprecated:** This provider has been superseded by [`mozilla/personapi`](https://github.com/mozilla/terraform-provider-personapi). Existing releases remain available. See the [migration guide](https://github.com/mozilla/terraform-provider-cis/blob/main/MIGRATION.md) before switching. Use `personapi_people` in the successor provider.
 
 ## Example Usage
 
